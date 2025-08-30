@@ -1,0 +1,402 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: catch_postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: catch_music
+      POSTGRES_USER: catch_user
+      POSTGRES_PASSWORD: catch_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/database/postgresql/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    networks:
+      - catch_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U catch_user -d catch_music"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: catch_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass catch_redis_password
+    volumes:
+      - redis_data:/data
+    networks:
+      - catch_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Cassandra Database (for analytics and time-series data)
+  cassandra:
+    image: cassandra:4.1
+    container_name: catch_cassandra
+    restart: unless-stopped
+    ports:
+      - "9042:9042"
+    environment:
+      CASSANDRA_CLUSTER_NAME: "Catch Music Cluster"
+      CASSANDRA_DC: "datacenter1"
+      CASSANDRA_RACK: "rack1"
+      CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
+      CASSANDRA_NUM_TOKENS: 128
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+      - ./backend/database/cassandra/schema.cql:/schema.cql:ro
+    networks:
+      - catch_network
+    healthcheck:
+      test: ["CMD", "cqlsh", "-u", "cassandra", "-p", "cassandra", "-e", "describe keyspaces"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Zookeeper (for Kafka)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: catch_zookeeper
+    restart: unless-stopped
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_logs:/var/lib/zookeeper/log
+    networks:
+      - catch_network
+
+  # Kafka Message Broker
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: catch_kafka
+    restart: unless-stopped
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_DELETE_TOPIC_ENABLE: 'true'
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper
+    networks:
+      - catch_network
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Kafka Topic Setup
+  kafka-setup:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: catch_kafka_setup
+    depends_on:
+      - kafka
+    volumes:
+      - ./backend/kafka/setup-topics.sh:/setup-topics.sh:ro
+    command: ["sh", "/setup-topics.sh"]
+    environment:
+      KAFKA_BROKERS: kafka:29092
+    networks:
+      - catch_network
+
+  # Java Core API Service
+  core-api:
+    build:
+      context: ./backend/java-core-api
+      dockerfile: Dockerfile
+    container_name: catch_core_api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/catch_music
+      DATABASE_USERNAME: catch_user
+      DATABASE_PASSWORD: catch_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: catch_redis_password
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      CASSANDRA_HOSTS: cassandra
+      CASSANDRA_PORT: 9042
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - catch_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Go User Service
+  user-service:
+    build:
+      context: ./backend/go-user-service
+      dockerfile: Dockerfile
+    container_name: catch_user_service
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    environment:
+      DATABASE_URL: postgres://catch_user:catch_password@postgres:5432/catch_music?sslmode=disable
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: catch_redis_password
+      KAFKA_BROKERS: kafka:29092
+      PORT: 8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - catch_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Python ML Service
+  ml-service:
+    build:
+      context: ./backend/python-ml-service
+      dockerfile: Dockerfile
+    container_name: catch_ml_service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: catch_music
+      POSTGRES_USER: catch_user
+      POSTGRES_PASSWORD: catch_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: catch_redis_password
+      KAFKA_BROKERS: kafka:29092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - catch_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # C++ Streaming Service
+  streaming-service:
+    build:
+      context: ./backend/cpp-streaming-service
+      dockerfile: Dockerfile
+    container_name: catch_streaming_service
+    restart: unless-stopped
+    ports:
+      - "9001:9001"
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: catch_redis_password
+      KAFKA_BROKERS: kafka:29092
+      AUDIO_STORAGE_PATH: /audio
+    volumes:
+      - audio_files:/audio
+    depends_on:
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - catch_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend Node.js Server (existing)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: catch_frontend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      NODE_ENV: production
+      BACKEND_API_URL: http://nginx:80
+    depends_on:
+      - nginx
+    networks:
+      - catch_network
+
+  # Nginx Load Balancer & API Gateway
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: catch_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./backend/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./backend/nginx/conf.d:/etc/nginx/conf.d:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - core-api
+      - user-service
+      - ml-service
+      - streaming-service
+    networks:
+      - catch_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: catch_prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./backend/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - catch_network
+
+  # Grafana Dashboards
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: catch_grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./backend/monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./backend/monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    networks:
+      - catch_network
+
+  # Kafka UI (for monitoring Kafka)
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: catch_kafka_ui
+    restart: unless-stopped
+    ports:
+      - "8090:8080"
+    environment:
+      DYNAMIC_CONFIG_ENABLED: true
+      KAFKA_CLUSTERS_0_NAME: catch-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    depends_on:
+      - kafka
+    networks:
+      - catch_network
+
+  # Database Admin (Adminer)
+  adminer:
+    image: adminer:4.8.1
+    container_name: catch_adminer
+    restart: unless-stopped
+    ports:
+      - "8082:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    depends_on:
+      - postgres
+    networks:
+      - catch_network
+
+  # Redis Commander (Redis UI)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: catch_redis_commander
+    restart: unless-stopped
+    ports:
+      - "8083:8081"
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:catch_redis_password
+    depends_on:
+      - redis
+    networks:
+      - catch_network
+
+networks:
+  catch_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_data:
+  redis_data:
+  cassandra_data:
+  zookeeper_data:
+  zookeeper_logs:
+  kafka_data:
+  audio_files:
+  prometheus_data:
+  grafana_data:
+  nginx_logs:

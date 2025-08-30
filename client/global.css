@@ -1,0 +1,458 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /**
+   * Tailwind CSS theme
+   * tailwind.config.ts expects the following color variables to be expressed as HSL values.
+   * A different format will require also updating the theme in tailwind.config.ts.
+  */
+  :root {
+    /* Default Dark Mode - Based on palette */
+    --background: 0 0% 4%; /* #0A0A0A - Very dark background */
+    --foreground: 0 0% 98%; /* #FAFAFA - Light text */
+
+    --card: 0 0% 9%; /* #171717 - Dark cards */
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 9%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 280 100% 70%; /* Bright purple primary */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 15%; /* #262626 - Dark secondary */
+    --secondary-foreground: 0 0% 90%;
+
+    --muted: 0 0% 22%; /* #373737 - Dark muted */
+    --muted-foreground: 0 0% 64%; /* #A3A3A3 - Medium gray text */
+
+    --accent: 320 100% 75%; /* Bright pink accent */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 32%; /* #525252 - Gray borders */
+    --input: 0 0% 9%; /* #171717 - Dark inputs */
+    --ring: 280 100% 70%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 4%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 280 100% 70%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 0 0% 32%;
+    --sidebar-ring: 280 100% 70%;
+
+    /* Purple theme colors */
+    --purple-primary: 280 100% 70%; /* Bright purple */
+    --purple-secondary: 320 90% 75%; /* Light pink-purple */
+    --purple-accent: 300 100% 80%; /* Bright purple-pink */
+    --purple-glow: 290 100% 85%; /* Light purple glow */
+    --purple-dark: 0 0% 9%; /* #171717 - Dark surface */
+    --purple-darker: 0 0% 4%; /* #0A0A0A - Darker surface */
+    --neon-green: 280 100% 70%; /* Purple primary */
+    --neon-blue: 320 90% 75%; /* Pink-purple */
+    --dark-surface: 0 0% 9%;
+    --darker-surface: 0 0% 4%;
+  }
+
+  .light {
+    /* Clean Light Mode - Based on palette */
+    --background: 0 0% 100%; /* #FFFFFF - Pure white background */
+    --foreground: 0 0% 4%; /* #0A0A0A - Dark text */
+
+    --card: 0 0% 98%; /* #FAFAFA - Light cards */
+    --card-foreground: 0 0% 4%; /* Dark text on cards */
+
+    --popover: 0 0% 98%;
+    --popover-foreground: 0 0% 4%;
+
+    --primary: 0 0% 4%; /* #0A0A0A - Dark primary buttons */
+    --primary-foreground: 0 0% 100%; /* White text on dark buttons */
+
+    --secondary: 0 0% 96%; /* #F5F5F5 - Light secondary */
+    --secondary-foreground: 0 0% 4%; /* Dark text */
+
+    --muted: 0 0% 90%; /* #E5E5E5 - Light muted */
+    --muted-foreground: 0 0% 45%; /* #737373 - Medium gray text */
+
+    --accent: 280 100% 70%; /* Purple accent */
+    --accent-foreground: 0 0% 100%; /* White text on accent */
+
+    --destructive: 0 84% 60%; /* Red for errors */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 83%; /* #D4D4D4 - Light borders */
+    --input: 0 0% 98%; /* #FAFAFA - Light inputs */
+    --ring: 280 100% 70%; /* Purple focus ring */
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 4%;
+    --sidebar-primary: 0 0% 4%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 4%;
+    --sidebar-border: 0 0% 83%;
+    --sidebar-ring: 280 100% 70%;
+
+    /* Light theme colors */
+    --purple-primary: 280 100% 70%; /* Purple primary */
+    --purple-secondary: 320 90% 75%; /* Light pink-purple */
+    --purple-accent: 300 100% 80%; /* Bright purple-pink */
+    --purple-glow: 290 100% 85%; /* Light purple glow */
+    --purple-dark: 0 0% 98%; /* #FAFAFA - Light surface */
+    --purple-darker: 0 0% 100%; /* #FFFFFF - White surface */
+    --neon-green: 280 100% 70%; /* Purple primary */
+    --neon-blue: 320 90% 75%; /* Pink-purple */
+    --dark-surface: 0 0% 98%; /* Light surface */
+    --darker-surface: 0 0% 100%; /* White surface */
+  }
+
+  .dark {
+    --background: 0 0% 0%; /* #000000 - Pure black background */
+    --foreground: 0 0% 98%; /* #FAFAFA - Light text */
+
+    --card: 0 0% 4%; /* #0A0A0A - Very dark cards */
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 4%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 280 100% 70%; /* Bright purple primary */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 9%; /* #171717 - Dark secondary */
+    --secondary-foreground: 320 30% 85%; /* Light pink text */
+
+    --muted: 0 0% 15%; /* #262626 - Dark muted */
+    --muted-foreground: 320 25% 75%; /* Pink-tinted gray text */
+
+    --accent: 320 100% 75%; /* Bright pink accent */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 22%; /* #373737 - Dark borders */
+    --input: 0 0% 4%; /* #0A0A0A - Very dark inputs */
+    --ring: 280 100% 70%;
+    --sidebar-background: 0 0% 0%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 280 100% 70%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 9%;
+    --sidebar-accent-foreground: 320 30% 85%;
+    --sidebar-border: 0 0% 22%;
+    --sidebar-ring: 280 100% 70%;
+
+    /* Purple-pink theme colors with pure black base */
+    --purple-primary: 280 100% 70%; /* Bright purple primary */
+    --purple-secondary: 320 90% 75%; /* Light pink secondary */
+    --purple-accent: 300 100% 80%; /* Bright purple-pink accent */
+    --purple-glow: 290 100% 85%; /* Bright pink-purple glow */
+    --purple-dark: 0 0% 4%; /* #0A0A0A - Very dark surface */
+    --purple-darker: 0 0% 0%; /* #000000 - Pure black surface */
+    --neon-green: 280 100% 70%; /* Purple instead of green */
+    --neon-blue: 320 90% 75%; /* Pink instead of blue */
+    --dark-surface: 0 0% 4%; /* Very dark surface */
+    --darker-surface: 0 0% 0%; /* Pure black surface */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
+    /* Claude-style font smoothing and typography */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      Arial,
+      "Noto Sans",
+      sans-serif;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  /* Purple theme utilities */
+  .glow-purple {
+    box-shadow: 0 0 20px hsl(var(--purple-primary) / 0.3);
+    transition: box-shadow 0.3s ease;
+  }
+
+  .glow-purple-lg {
+    box-shadow: 0 0 40px hsl(var(--purple-primary) / 0.4);
+    transition: box-shadow 0.3s ease;
+  }
+
+  /* Theme transition utilities */
+  .theme-transition {
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease,
+      border-color 0.3s ease;
+  }
+
+  /* High contrast black and white light mode utilities */
+  .light .google-shadow {
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.15);
+  }
+
+  .light .google-shadow-hover {
+    box-shadow: 0 2px 8px 0 rgb(0 0 0 / 0.2);
+  }
+
+  .light .google-shadow-lg {
+    box-shadow:
+      0 4px 6px -1px rgb(0 0 0 / 0.15),
+      0 2px 4px -1px rgb(0 0 0 / 0.1);
+  }
+
+  /* High contrast light mode card shadows */
+  .light .youtube-shadow {
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.15);
+  }
+
+  .light .youtube-shadow-hover {
+    box-shadow:
+      0 2px 8px 0 rgb(0 0 0 / 0.2),
+      0 1px 4px 0 rgb(0 0 0 / 0.1);
+  }
+
+  /* High contrast text colors - pure black and white */
+  .light .text-light-primary {
+    color: rgb(0 0 0); /* Pure black text */
+  }
+
+  .light .text-light-secondary {
+    color: rgb(60 60 60); /* Dark gray secondary text */
+  }
+
+  .light .text-light-tertiary {
+    color: rgb(100 100 100); /* Medium gray tertiary text */
+  }
+
+  /* Force black text for all gradients in light mode */
+  .light .purple-gradient-text {
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    background-clip: unset !important;
+    -webkit-text-fill-color: unset !important;
+    color: rgb(0 0 0) !important; /* Pure black text */
+  }
+
+  /* Pure black accents for light mode */
+  .light .light-accent {
+    color: rgb(0 0 0) !important; /* Pure black */
+  }
+
+  .light .light-accent-bg {
+    background-color: rgb(0 0 0) !important;
+    color: rgb(255 255 255) !important;
+  }
+
+  .light .light-hover-accent {
+    transition: all 0.2s ease;
+  }
+
+  .light .light-hover-accent:hover {
+    color: rgb(0 0 0) !important;
+    background-color: rgb(240 240 240);
+  }
+
+  /* High contrast black and white shadows */
+  .light .claude-shadow {
+    box-shadow:
+      0 1px 3px 0 rgb(0 0 0 / 0.15),
+      0 1px 2px -1px rgb(0 0 0 / 0.1);
+  }
+
+  .light .claude-shadow-hover {
+    box-shadow:
+      0 4px 6px -1px rgb(0 0 0 / 0.15),
+      0 2px 4px -1px rgb(0 0 0 / 0.1);
+  }
+
+  /* Force black text and icons everywhere in light mode */
+  .light * {
+    color: inherit;
+  }
+
+  .light svg {
+    color: inherit !important;
+  }
+
+  .light button {
+    color: inherit;
+  }
+
+  .light a {
+    color: rgb(0 0 0);
+  }
+
+  .light a:hover {
+    color: rgb(60 60 60);
+  }
+
+  /* Claude-like dark mode utilities */
+  .dark .claude-dark-shadow {
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.5);
+  }
+
+  .dark .claude-dark-shadow-hover {
+    box-shadow:
+      0 4px 6px -1px rgb(0 0 0 / 0.4),
+      0 2px 4px -1px rgb(0 0 0 / 0.4);
+  }
+
+  .dark .claude-dark-shadow-lg {
+    box-shadow:
+      0 10px 15px -3px rgb(0 0 0 / 0.4),
+      0 4px 6px -4px rgb(0 0 0 / 0.4);
+  }
+
+  .dark .dark-shadow-orange {
+    box-shadow:
+      0 4px 12px 0 hsl(25 95% 53% / 0.2),
+      0 2px 6px 0 rgb(0 0 0 / 0.5);
+  }
+
+  .dark .text-dark-primary {
+    color: rgb(241 243 244); /* Clean light text */
+  }
+
+  .dark .text-dark-secondary {
+    color: rgb(170 170 170); /* Secondary text */
+  }
+
+  .dark .text-dark-tertiary {
+    color: rgb(136 136 136); /* Tertiary text */
+  }
+
+  .dark .bg-dark-card {
+    background-color: hsl(218 11% 15%); /* Dark blue-gray cards */
+  }
+
+  .dark .bg-dark-surface {
+    background-color: hsl(218 11% 12%); /* Dark blue-gray surface */
+  }
+
+  .purple-gradient-text {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--purple-primary)),
+      hsl(var(--purple-secondary)),
+      hsl(var(--purple-accent))
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .purple-gradient-border {
+    border: 1px solid;
+    border-image: linear-gradient(
+        135deg,
+        hsl(var(--purple-primary)),
+        hsl(var(--purple-secondary))
+      )
+      1;
+  }
+
+  .hover-lift {
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Claude-like smooth interactions */
+  .claude-transition {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .claude-button {
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateZ(0);
+  }
+
+  .claude-button:hover {
+    transform: translateY(-1px) translateZ(0);
+  }
+
+  .claude-button:active {
+    transform: translateY(0) translateZ(0);
+  }
+
+  /* Mobile safe area utilities */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .h-safe-bottom {
+    height: env(safe-area-inset-bottom);
+  }
+
+  /* Mobile optimizations */
+  @media (max-width: 640px) {
+    .mobile-footer {
+      padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    }
+  }
+
+  /* Animated pink border glow for albums */
+  @keyframes borderGlow {
+    0%,
+    100% {
+      box-shadow:
+        0 0 0 1px rgba(236, 72, 153, 0.6),
+        inset 0 0 0 1px rgba(236, 72, 153, 0.3);
+    }
+    50% {
+      box-shadow:
+        0 0 0 2px rgba(236, 72, 153, 0.8),
+        inset 0 0 0 2px rgba(236, 72, 153, 0.5),
+        0 0 10px rgba(236, 72, 153, 0.4);
+    }
+  }
+}
